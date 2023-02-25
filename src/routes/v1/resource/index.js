@@ -8,7 +8,6 @@ router.get('/test', (req, res) => {
     res.end('test resource route')
 })
 router.get('/', (req, res) => {
-    console.log('handleRequest | req:', req.method);
     const cookie = crypto.randomUUID().split('-').join('');
     res.writeHead(200, {
         'Content-Type': 'text/plain',

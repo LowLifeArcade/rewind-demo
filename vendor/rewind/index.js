@@ -1,124 +1,112 @@
 import http, { IncomingMessage, ServerResponse, Server } from 'http';
 /** @typedef { import('./rewind').RequestHandler } RequestHandler */
 
-function handleNext(req, res, next) {
-    if (!next) {
-        // handleRequest or useRequest?
-    }
-
-    for (let i = 0; i < next.length; i++) {
-        const nextCb = next[i];
-        nextCb(req, res);
-    }
-}
-
-function useRequest(method, { path, cb, app, next }) {
-    /**@type { Server } */
-
-    app.server.on('request', handleRequest);
-    
-    /**
-     * @param { IncomingMessage } req
-     * @param { ServerResponse } res
-     */
-    function handleRequest(req, res) {
-        const reqUrl = clean({ path: req.url });
-        
-        log('request', {
-            path,
-            reqUrl,
-            reqMethod: req.method,
-            method,
-            // req,
-            // res
-        })
-
-        try {
-            if (req.method !== method || reqUrl !== path) {
-                log('error', `${method} request logged for ${reqUrl}\n`)
-                return;
-            }
-    
-            log('success', 'handle request cb',`${method} request logged for ${reqUrl}\n`);
-            cb(req, res);
-        } catch (error) {
-            log('error', error);
-        }
-    }
-}
 
 function rewind(opts = { }) {
     let { base = '/' } = opts;
+    const { server } = setUp(); 
+
+    function setUp() {
+        console.clear();
+        const server = http.createServer();
+        return { server };
+    }
+    
     return {
-        server: http.createServer(), 
-        listen(port, cb) {
+        server,
+        listen(port, listenCb) {
             this.server.listen(port);
-            cb(this.server);
+            this.server.on('request', (req, res) => {
+                this.onRequest(req, res);
+            }); 
+            listenCb(this.server); 
+        },
+        routes: [],
+        
+        /**
+         * @param { IncomingMessage } req
+         * @param { ServerResponse } res
+         */
+        onRequest(req, res) {
+            const reqUrl = clean({ base: req.url });
+            const reqMethod = req.method;
+            
+            log('request', {
+                reqUrl,
+                reqMethod,
+                // req,
+                // res
+            })
+            
+            for (let i = 0; i < this.routes.length; i++) {
+                const [ method, path, cb, next ] = this.routes[i];
+                if (method === req.method && path === reqUrl) {
+                    log('success', 'handle request cb',`${method} request logged for ${reqUrl}\n`);
+                    cb(req, res);
+                }
+            }
         },
         use(_module = null) {
             log('use: ', _module.routes);
             if (_module.type === 'routes') {
                 const routes = _module.routes;
+
                 for (let i = 0; i < routes.length; i++) {
-                    const route = routes[i];
-                    this[route[0].toLowerCase()](route[1], route[2])
-                }
+                    const [ method, path, cb, next ] = routes[i];
+                    this[method.toLowerCase()](path, cb, next)
+                } 
             }
         },
         /** @type { RequestHandler } */
         get(path, cb, ...next) {
-            useRequest('GET', {
-                path: clean({ base }) + clean({ path }),
-                cb,
-                app: this,
-                next,
-            });
+            this.addRoute('GET', { path, cb, next });
         },
         /** @type { RequestHandler } */
         post(path, cb, ...next) {
-            useRequest('POST', {
-                path: clean({ base }) + clean({ path }),
-                cb,
-                app: this,
-                next,
-            });
+            this.addRoute('POST', { path, cb, next });
         },
         /** @type { RequestHandler } */
         put(path, cb, ...next) {
-            useRequest('PUT', {
-                path: clean({ base }) + clean({ path }),
-                cb,
-                app: this,
-                next,
-            });
+            this.addRoute('PUT', { path, cb, next });
         },
         /** @type { RequestHandler } */
         delete(path, cb, ...next) {
-            useRequest('DELETE', {
-                path: clean({ base }) + clean({ path }),
-                cb,
-                app: this,
-                next,
-            });
+            this.addRoute('DELETE', { path, cb, next });
+        },
+        addRoute(method, opts) {
+            this.routes.push([method, clean({ base }) + clean({ path: opts.path }), opts.cb, opts?.next]);
+        },
+        onNext(req, res, next) {
+            if (!next) {
+                // handleRequest or useRequest?
+            }
+        
+            for (let i = 0; i < next.length; i++) {
+                const nextCb = next[i];
+                nextCb(req, res);
+            }
         }
     };
 }
 
-function clean({ base = null, path = null }) {
-    if (path && !path.endsWith('/')) {
-        path = path + '/';
+
+function clean({ base, path }) {
+    let url = base || path;
+
+    if (path && !url.endsWith('/')) {
+        url = url + '/';
     }
-    if (path && path.startsWith('/')) {
-        path = path.slice(1);
+    if (path && url.startsWith('/')) {
+        url = url.slice(1);
     }
-    if (base && !base.endsWith('/')) {
-        base = base + '/';
+    if (base && !url.endsWith('/')) {
+        url = url + '/';
     }
-    if (base && !base.startsWith('/')) {
-        base = '/' + base;
+    if (base && !url.startsWith('/')) {
+        url = '/' + url;
     }
 
-    return base || path;
+    return url;
 }
 
 export function useRouter() {
@@ -159,7 +147,6 @@ export function log(type, ...val) {
     if (typeof logType !== 'string') {
         logType = opts.type;
     }
-
     
     switch (logType) {
         case 'info':
