@@ -1,0 +1,16 @@
+{
+  "name": "ssr-framework",
+  "version": "1.0.0",
+  "description": "A minimal server with ssr views",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "nodemon src/server.js",
+    "prod": "node server.js"
+  },
+  "author": "LowLifeArcade",
+  "license": "ISC",
+  "imports": {
+    "#rewind": "./vendor/rewind/index.js"
+  }
+}
