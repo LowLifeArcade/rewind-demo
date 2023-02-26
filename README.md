@@ -8,4 +8,12 @@ A lightweight server rendered framework
 </div>
 <br />
 
+## Directions
+
+Clone demo repo and run:
+
+> `npm i`
+>
+> `npm start`
+>
 > coming soon: `npm i keywall-rewind`
