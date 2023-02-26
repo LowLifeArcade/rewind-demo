@@ -1,7 +1,7 @@
-import { defineComp } from "node_modules/keywall/dist/lib";
+import { defineComp, renderApp } from "node_modules/keywall/dist/lib";
 import Button from "~/components/button";
 
-function Home() {
+function App() {
     return defineComp({
         html: /* HTML */`
             <h1>Home</h1>
@@ -18,4 +18,4 @@ function Home() {
     })
 }
 
-export default Home;
+renderApp('app', App());

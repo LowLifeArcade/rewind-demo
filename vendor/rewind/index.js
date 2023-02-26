@@ -1,8 +1,38 @@
 import http from 'http';
+import fs from 'fs';
+import path from 'path';
 /** @typedef { import('./rewind').RequestHandler } RequestHandler */
 /** @typedef { import('./rewind').KeywallRequest } KeywallRequest */
 /** @typedef { import('./rewind').KeywallResponse } KeywallResponse */
 
+/**
+ * @param { KeywallRequest } req
+ * @param { KeywallResponse } res
+ */
+function onRequest(req, res) {
+    let [ reqUrl, query ] = req.url.split('?');
+    req.url = reqUrl = clean({ base: reqUrl });
+    req.query = query;
+    const reqMethod = req.method;
+
+    log('request', {
+        reqUrl,
+        query,
+        reqMethod,
+        // req,
+        // res
+    })
+    
+    for (let i = 0; i < this.routes.length; i++) {
+        const [ method, path, cb, next ] = this.routes[i];
+        
+        if (method === req.method && path === reqUrl) {
+            log('success', 'handle request cb',`${method} request logged for ${reqUrl}\n`);
+            return cb(req, res);
+        }
+    }
+    this.handleError(req, res);
+}
 
 function rewind(opts = { }) {
     let { base = '/' } = opts;
@@ -24,35 +54,7 @@ function rewind(opts = { }) {
             listenCb(this.server); 
         },
         routes: [],
-        
-        /**
-         * @param { KeywallRequest } req
-         * @param { KeywallResponse } res
-         */
-        onRequest(req, res) {
-            let [ reqUrl, query ] = req.url.split('?');
-            req.url = reqUrl = clean({ base: reqUrl });
-            req.query = query;
-            const reqMethod = req.method;
-
-            log('request', {
-                reqUrl,
-                query,
-                reqMethod,
-                // req,
-                // res
-            })
-            
-            for (let i = 0; i < this.routes.length; i++) {
-                const [ method, path, cb, next ] = this.routes[i];
-                
-                if (method === req.method && path === reqUrl) {
-                    log('success', 'handle request cb',`${method} request logged for ${reqUrl}\n`);
-                    return cb(req, res);
-                }
-            }
-            this.handleError(req, res);
-        },
+        onRequest,
         /**
          * @param { KeywallRequest } req
          * @param { KeywallResponse } res
