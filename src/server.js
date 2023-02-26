@@ -1,25 +1,13 @@
 import rewind, { log } from '#rewind';
-import crypto from 'crypto'; 
-import resourceRoutes from './routes/v1/resource/index.js'
+import resourceRoutes from './routes/api/v1/resource/index.js';
+import viewRoutes from './routes/views/index.js';
 
 const port = process.env.port || 8080;
-const app = rewind({
-    base: 'api'
-});
+const app = rewind();
 
 app.use(resourceRoutes);
-
-app.get('/', (req, res) => { 
-    const cookie = crypto.randomUUID().split('-').join('');
-    res.writeHead(200, {
-        'Content-Type': 'text/plain',
-        'x-test': 'test',
-        'Set-Cookie': [`rewind.test=${cookie}; HttpOnly`, `rewind.test2=test`],
-    });
-
-    res.end(`Hello from server ${req.url}!`);
-})
+app.use(viewRoutes);
 
 app.listen(port, (server) => {
-    log('info', `Http server listening on http://localhost:${port}`);
+    log('info', `Http server listening on http://localhost:${ port }`);
 });

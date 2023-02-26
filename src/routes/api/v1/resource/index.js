@@ -2,10 +2,10 @@ import { useRouter } from "#rewind";
 import crypto from 'crypto';
 const router = useRouter();
 
-router.base('/v1/resource/')
+router.base('api/v1/resource/')
 
-router.get('/test', (req, res) => {
-    res.end('test resource route')
+router.get('/images/keywall', (req, res) => {
+    res.end('keywall image');
 })
 router.get('/', (req, res) => {
     const cookie = crypto.randomUUID().split('-').join('');
@@ -15,7 +15,7 @@ router.get('/', (req, res) => {
         'Set-Cookie': [`rewind.test=${cookie}; HttpOnly`, `rewind.test2=test`],
     });
 
-    res.end(`Hello from server ${req.url}!`);
+    res.end(`Hello from server resources ${req.url}!`);
 })
 
 export default router;

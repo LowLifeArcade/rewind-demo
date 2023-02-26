@@ -12,5 +12,8 @@
   "license": "ISC",
   "imports": {
     "#rewind": "./vendor/rewind/index.js"
+  },
+  "dependencies": {
+    "keywall": "^0.2.2"
   }
 }

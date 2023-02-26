@@ -1,5 +1,7 @@
-import http, { IncomingMessage, ServerResponse, Server } from 'http';
+import http from 'http';
 /** @typedef { import('./rewind').RequestHandler } RequestHandler */
+/** @typedef { import('./rewind').KeywallRequest } KeywallRequest */
+/** @typedef { import('./rewind').KeywallResponse } KeywallResponse */
 
 
 function rewind(opts = { }) {
@@ -24,15 +26,18 @@ function rewind(opts = { }) {
         routes: [],
         
         /**
-         * @param { IncomingMessage } req
-         * @param { ServerResponse } res
+         * @param { KeywallRequest } req
+         * @param { KeywallResponse } res
          */
         onRequest(req, res) {
-            const reqUrl = clean({ base: req.url });
+            let [ reqUrl, query ] = req.url.split('?');
+            req.url = reqUrl = clean({ base: reqUrl });
+            req.query = query;
             const reqMethod = req.method;
-            
+
             log('request', {
                 reqUrl,
+                query,
                 reqMethod,
                 // req,
                 // res
@@ -40,11 +45,23 @@ function rewind(opts = { }) {
             
             for (let i = 0; i < this.routes.length; i++) {
                 const [ method, path, cb, next ] = this.routes[i];
+                
                 if (method === req.method && path === reqUrl) {
                     log('success', 'handle request cb',`${method} request logged for ${reqUrl}\n`);
-                    cb(req, res);
+                    return cb(req, res);
                 }
             }
+            this.handleError(req, res);
+        },
+        /**
+         * @param { KeywallRequest } req
+         * @param { KeywallResponse } res
+         */
+        handleError(req, res) {
+            res.writeHead(404, {
+                'Content-Type': 'text/plain',
+            })
+            res.end('404')
         },
         use(_module = null) {
             log('use: ', _module.routes);
@@ -116,21 +133,24 @@ export function useRouter() {
         base(base) {
             this.basePath = clean({ base });
         },
+        addRoute(method, opts) {
+            this.routes.push([ method, this.basePath + clean({ path: opts.path }), opts.cb, opts.next ])
+        },
         /** @type { RequestHandler } */
         get(path, cb, next) {
-            this.routes.push(['GET', this.basePath + clean({ path }), cb, next])
+            this.addRoute('GET', { path, cb, next });
         },
         /** @type { RequestHandler } */
         post(path, cb, next) {
-            this.routes.push(['POST', this.basePath + clean({ path }), cb, next])
+            this.addRoute('POST', { path, cb, next });
         },
         /** @type { RequestHandler } */
         put(path, cb, next) {
-            this.routes.push(['PUT', this.basePath + clean({ path }), cb, next])
+            this.addRoute('PUT', { path, cb, next });
         },
         /** @type { RequestHandler } */
         delete(path, cb, next) {
-            this.routes.push(['DELETE', this.basePath + clean({ path }), cb, next])
+            this.addRoute('DELETE', { path, cb, next });
         },
         routes: [],
     }
