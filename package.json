@@ -1,19 +1,28 @@
 {
-  "name": "ssr-framework",
+  "name": "keywall-rewind-demo",
   "version": "1.0.0",
-  "description": "A minimal server with ssr views",
+  "description": "A minimal server with ssr keywall views",
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "nodemon src/server.js",
-    "prod": "node server.js"
+    "start": "node server.js & build",
+    "dev": "nodemon server.js & build",
+    "prod": "node server.js",
+    "build:watch": "rollup -c --watch",
+    "build": "rollup -c"
   },
   "author": "LowLifeArcade",
   "license": "ISC",
   "imports": {
-    "#rewind": "./vendor/rewind/index.js"
+    "#rewind": "./vendor/rewind/index.js",
+    "#keywall": "./node_modules/keywall/dist/lib.js",
+    "#src/*": "./src/*"
   },
   "dependencies": {
     "keywall": "^0.2.2"
+  },
+  "devDependencies": {
+    "@rollup/plugin-terser": "^0.4.0",
+    "rollup": "^3.17.3"
   }
 }

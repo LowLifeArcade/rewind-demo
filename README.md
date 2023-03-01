@@ -15,5 +15,6 @@ Clone demo repo and run:
 > `npm i`
 >
 > `npm start`
+> `npm run build:watch`
 >
 > coming soon: `npm i keywall-rewind`

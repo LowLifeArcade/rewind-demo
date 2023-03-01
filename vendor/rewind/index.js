@@ -10,10 +10,16 @@ import path from 'path';
  * @param { KeywallResponse } res
  */
 function onRequest(req, res) {
+    const reqMethod = req.method;
+    const origins = this.config.origins.length ? this.config.origins : null;
+    const allowedHeaders = this.config.allowedHeaders.length ? this.config.origins : null;
     let [ reqUrl, query ] = req.url.split('?');
     req.url = reqUrl = clean({ base: reqUrl });
     req.query = query;
-    const reqMethod = req.method;
+    
+    res.setHeader('Access-Control-Allow-Origin', origins || ['*']);
+    res.setHeader('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+    res.setHeader('Access-Control-Allow-Headers', allowedHeaders || 'Content-Type');
 
     log('request', {
         reqUrl,
@@ -54,6 +60,14 @@ function rewind(opts = { }) {
             listenCb(this.server); 
         },
         routes: [],
+        executionStack: [],
+        config: {
+            origins: [],
+            allowedHeaders: [],
+        },
+        cors(origins) {
+            this.config.origins = origins;
+        },
         onRequest,
         /**
          * @param { KeywallRequest } req
@@ -74,6 +88,13 @@ function rewind(opts = { }) {
                     const [ method, path, cb, next ] = routes[i];
                     this[method.toLowerCase()](path, cb, next)
                 } 
+            }
+        },
+        callExecutionStack(req, res) {
+            for (let i = 0; i < this.executionStack.length; i++) {
+                const cb = this.executionStack[i];
+                // stack [...modules, ...requestHandlers, ...errorHandlers]
+                cb(req, res);
             }
         },
         /** @type { RequestHandler } */
